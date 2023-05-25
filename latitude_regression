@@ -1,0 +1,75 @@
+library(tidyverse)
+library(broom)
+
+#print(Lampropeltis_Data)
+
+#Pyromelana regression of latitude and proportion black + residuals normality test
+pyromelana_latitude=filter(Lampropeltis_Data,Species=="pyromelana")%>%
+  mutate(proportion_red=Red/Total)%>%
+  mutate(proportion_black=Black/Total)
+#print(pyromelana_latitude)
+
+Pyromelana_latitude_lm=lm(proportion_black~Latitude,data=pyromelana_latitude)
+#print(summary.lm(Pyromelana_latitude_lm))
+#^^^R squared value is 0.1185, meaning that about 12% of the variation in black can be explained by latitude
+#print(tidy(Pyromelana_latitude_lm))
+#^^^^^ p value is 0.001094, so it is significant (we can reject that there is zero relationship)
+#print(confint(Pyromelana_latitude_lm))
+#^^^ default 95 confidence interval for the slope is 0.004669346 to 0.02800263
+Pyromelana_latitude_residuals=(Pyromelana_latitude_lm$residuals)
+pyro_lat_resid=(tibble(pyromelana_latitude,Pyromelana_latitude_residuals))
+ggplot(data=pyro_lat_resid,aes(x=Latitude,y=Pyromelana_latitude_residuals))+
+  geom_point()+
+  geom_smooth(method=lm)+
+  geom_hline(yintercept=0)+
+  theme_bw()+
+  labs(x="Latitude",y="Residuals")
+#^^^dot plot of residuals is close to normal
+#print(shapiro.test(Pyromelana_latitude_residuals))
+#^^^^the residuals are normal. p= 0.5096, which is greater than 0.05.
+
+#Pyromelana latitude graph:
+ggplot(data=pyromelana_latitude,aes(x=Latitude,y=proportion_black))+
+  geom_smooth(method=lm,color="black")+
+  geom_point()+
+  labs(x="Latitude (°N)",y="Proportion Black (%)")+
+  theme_bw()+
+  ggtitle(expression(paste(italic("L. pyromelana")," Variation in Dorsal Black by Latitude")))+
+  theme(plot.title=element_text(hjust=0.5))+
+  ylim(0.2,0.75)
+
+#Knoblochi regression of latitude and proportion black + residuals normality test
+knoblochi_latitude=filter(Lampropeltis_Data,Species=="knoblochi")%>%
+  mutate(proportion_red=Red/Total)%>%
+  mutate(proportion_black=Black/Total)
+#print(knoblochi_latitude)
+
+knoblochi_latitude_lm=lm(proportion_black~Latitude,data=knoblochi_latitude)
+#print(summary.lm(knoblochi_latitude_lm))
+#^^^R squared value of 0.1648, meaning that about 16.5% of the variation in black can be explained by latitude
+#print(tidy(knoblochi_latitude_lm))
+#^^^^^ p value is 0.0000542, so it is significant (we can reject that there is zero relationship)
+#print(confint(knoblochi_latitude_lm))
+#^^^ default 95 confidence interval for the slope is 0.01779589 to 0.049210764
+#however, the residuals are not normal.
+knoblochi_latitude_residuals=(knoblochi_latitude_lm$residuals)
+#print(shapiro.test(knoblochi_latitude_residuals))
+#^^^^the residuals are technically not normal for knoblochi? 0.007972 (greater than 0.05 you can assume normal)
+knob_lat_resid=(tibble(knoblochi_latitude,knoblochi_latitude_residuals))
+ggplot(data=knob_lat_resid,aes(x=Latitude,y=knoblochi_latitude_residuals))+
+  geom_point()+
+  geom_smooth(method=lm)+
+  geom_hline(yintercept=0)+
+  theme_bw()+
+  labs(x="Latitude",y="Residuals")
+#^^^While the residuals are not normal, the dot plot shows that they are close. The uneven distribution of points along the X axis is problematic.
+
+#Knoblochi latitude graph
+ggplot(data=knoblochi_latitude,aes(x=Latitude,y=proportion_black))+
+  geom_smooth(method=lm,color="black")+
+  geom_point()+
+  labs(x="Latitude (°N)",y="Proportion Black (%)")+
+  theme_bw()+
+  ggtitle(expression(paste(italic("L. knoblochi")," Variation in Dorsal Black by Latitude")))+
+  theme(plot.title=element_text(hjust=0.5))+
+  ylim(0.2,0.75)
