@@ -1,0 +1,79 @@
+library(tidyverse)
+library(broom)
+
+#print(Lampropeltis_Data)
+
+#Pyromelana regression of mimicry and distance + residual normality test
+Pyromelana_Dissimilarity=filter(Lampropeltis_Data,Species=="pyromelana")
+#print(Pyromelana_Dissimilarity)
+Pyromelana_lm_result=lm(Dissimilarity~Distance_from_M_euryxanthus,data=Lampropeltis_Data)
+#print(summary.lm(Pyromelana_lm_result))
+#^^^R squared value is 0.09376, meaning that about 9.4% of the variation in dissimilarity (of color) can be explained by distance
+#print(tidy(Pyromelana_lm_result))
+#^^^^^ p value is 0.00392. It is below 0.05, so it is significant (we can reject that there is zero relationship)
+#print(confint(Pyromelana_lm_result))
+#^^^ default 95 confidence interval for the slope is 0.0004954011 to 0.002511131, all positive.
+Pyromelana_residuals=((Pyromelana_lm_result$residuals))
+#print(shapiro.test(Pyromelana_residuals))
+#the residuals are normal; shapiro test gives a p value of 0.06665, which is above 0.05
+
+#Pyromelana graph:
+ggplot(data=Pyromelana_Dissimilarity,aes(x=Distance_from_M_euryxanthus,y=Dissimilarity))+
+  geom_point()+
+  geom_smooth(method=lm,color="black")+
+  theme_bw()+
+  labs(x = "Distance from sympatry/allopatry boundary (km)", y ="Dissimilarity (D)") +
+  ggtitle(expression(paste(italic("L. pyromelana")," Mimetic Variation")))+
+  theme(plot.title=element_text(hjust=0.5))+
+  geom_vline(xintercept = 0, linetype="dotted", color = "black", size=1)+
+  ylim(0,3.9)
+
+
+#Knoblochi regression of mimicry and distance + residual normality test
+Knoblochi_Dissimilarity=filter(Lampropeltis_Data,Species=="knoblochi")
+#print(Knoblochi_Dissimilarity)
+Knoblochi_lm_result=lm(Dissimilarity~Distance_from_M_euryxanthus,data=Knoblochi_Dissimilarity)
+#print(summary.lm(Knoblochi_lm_result))
+#^^^R squared value is 0.003713, meaning that about .37% of the variation in dissimilarity (of color) can be explained by distance
+#print(tidy(Knoblochi_lm_result)$p.value)
+#^^^^^ p value is 0.562, so it is NOT significant (we cannot reject that there is zero relationship)
+#print(confint(Knoblochi_lm_result))
+#^^^ default 95 confidence interval for the slope is -0.001411829 0.002583099; unable to say if it is positive or negative, which makes sense with such a high p value
+Knoblochi_residuals=((Knoblochi_lm_result$residuals))
+#print(shapiro.test(Knoblochi_residuals))
+#shapiro test of residuals gives a p value of 0.001407, so we can't say they are normal. Not sure if this is matters since the result was so far from being significant anyway
+
+#knoblochi graph
+ggplot(data=Knoblochi_Dissimilarity,aes(x=Distance_from_M_euryxanthus,y=Dissimilarity))+
+  geom_point()+
+  geom_smooth(method=lm,color="black")+
+  theme_bw()+
+  labs(x = "Distance from sympatry/allopatry boundary (km)", y ="Dissimilarity (D)") +
+  ggtitle(expression(paste(italic("L. knoblochi")," Mimetic Variation")))+
+  theme(plot.title=element_text(hjust=0.5))+
+  geom_vline(xintercept = 0, linetype="dotted", color = "black", size=1)+
+  ylim(0,3.9)
+
+#If the two species were to be viewed as one species as was the case until 2011, this is what the mimicry regression results would be
+total_lm_result=lm(Dissimilarity~Distance_from_M_euryxanthus,data=Lampropeltis_Data)
+#print(summary.lm(total_lm_result))
+#^^R squared value is 0.07214, so 7.2% of the variation in dissimilarity is explained by distance
+#print(tidy(total_lm_result))
+#p value is 0.000267, so it would be statistically significant but the residuals are not normal (see below)
+#print(confint(total_lm_result))
+#95% conf int for the slope is  0.0006008295 0.00195851
+total_residuals=((total_lm_result$residuals))
+#shapiro test gives a p value of 0.0002267, which is below 0.05, indicating the residuals are not normal. The graph of the residuals also does not look entirely normal.
+#print(shapiro.test(total_residuals))
+new_data=(tibble(Lampropeltis_Data, total_residuals))
+ggplot(data=new_data,aes(x=Distance_from_M_euryxanthus,y=total_residuals))+
+  geom_point()+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  labs(x="Distances", y="Residuals")
+
+#combined graphs; both species
+ggplot(data=Lampropeltis_Data,aes(x=Distance_from_M_euryxanthus,y=Dissimilarity))+
+  geom_point()+
+  geom_smooth(method=lm)+
+  theme_bw()
