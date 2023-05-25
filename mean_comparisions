@@ -1,0 +1,109 @@
+#Mean comparisons
+
+library(tidyverse)
+
+#print(Lampropeltis_Data)
+
+#Mean dissimilarity of pyromelana in allopatry vs. sympatry
+pyromelana_allo=filter(Lampropeltis_Data,Species=="pyromelana")%>%
+  mutate(allopatric=Distance_from_M_euryxanthus<0)
+#print(pyromelana_allo)
+#test_normal_allo=filter(pyromelana_allo,allopatric==FALSE)%>%
+#  pull(Dissimilarity)
+#print(shapiro.test(test_normal_allo))
+#^^p=0.007751, so normality cannot be assumed.
+#test_normal_allo=filter(pyromelana_allo,allopatric==TRUE)%>%
+#  pull(Dissimilarity)
+#print(shapiro.test(test_normal_allo))
+#p=0.7197; normality can be assumed. Since normality can only be assumed for one group, non-parametric test is the better option.
+#wilcox.test(Dissimilarity~allopatric,data=pyromelana_allo,var.equal=TRUE)
+#P value is 0.2177, so no significant difference between groups
+
+#Mean dissimilarity of pyromelana in allopatry vs the edge
+pyromelana_edge=filter(Lampropeltis_Data,Species=="pyromelana")%>%
+  mutate(edge=Distance_from_M_euryxanthus<100)
+#print(pyromelana_edge)
+#test_normal_edge=filter(pyromelana_edge,edge==FALSE)%>%
+#  pull(Dissimilarity)
+#print(shapiro.test(test_normal_edge))
+#^^p=0.085, normality can be assumed
+#test_normal_edge=filter(pyromelana_edge,edge==TRUE)%>%
+ # pull(Dissimilarity)
+#print(shapiro.test(test_normal_edge))
+#p=0.1502; normality can be assumed. T test can be used.
+#t.test(Dissimilarity~edge,data=pyromelana_edge,var.equal=TRUE)
+#P value is 0.01142, so difference between the two groups is significant.
+
+#pyromelana box plot (comparing edge vs deep allopatry)
+summary_pyro_data=group_by(pyromelana_edge,edge)%>%
+  summarize(Mean=mean(Dissimilarity),
+            SE=sd(Dissimilarity)/sqrt(length(Dissimilarity)),
+            LowerCI=(Mean - qt(0.025,length(Dissimilarity)-1,lower.tail=FALSE) *SE),
+            UpperCI=(Mean + qt(0.025, length(Dissimilarity)-1,lower.tail=FALSE)*SE))%>%
+  rename(Dissimilarity=Mean)
+#print(summary_pyro_data)
+x_positions = 1:nrow(summary_pyro_data)+.5
+ggplot(data=pyromelana_edge, aes(x=edge,y = Dissimilarity)) +
+  geom_boxplot(outlier.shape=NA,width=.5) +
+  geom_jitter(width=.1,size=1)+
+  geom_errorbar(width=.1,aes(x=x_positions,ymin=LowerCI,ymax=UpperCI),summary_pyro_data)+
+  geom_pointrange(aes(x=x_positions,ymin=LowerCI,ymax=UpperCI),summary_pyro_data)+
+  ylim(0, 4)+
+  theme_bw()+
+  ylab("Dissimilarity Score (D)")+
+  theme(axis.title.x = element_blank())+
+  ggtitle(expression(paste(italic("L. pyromelana")," Mimetic Dissimilarity")))+
+  theme(plot.title=element_text(hjust=0.5))+
+  scale_x_discrete(labels=c("Deep Allopatric (100+ km)", "Edge (<100 km)")) 
+
+knoblochi_allo=filter(Lampropeltis_Data,Species=="knoblochi")%>%
+  mutate(sympatric=Distance_from_M_euryxanthus<0)
+#print(knoblochi_allo)
+#test_normal_allo=filter(knoblochi_allo,sympatric==FALSE)%>%
+#  pull(Dissimilarity)
+#print(shapiro.test(test_normal_allo))
+#^^p=0.6609, so normality can be assumed
+#test_normal_allo=filter(knoblochi_allo,sympatric==TRUE)%>%
+#  pull(Dissimilarity)
+#print(shapiro.test(test_normal_allo))
+#p=0.001901; normality cannot be assumed. Since normality can only be assumed for one group, non-parametric test is the better option.
+#wilcox.test(Dissimilarity~sympatric,data=knoblochi_allo)
+#p value is .2251, so no difference between two groups is not significant.
+
+
+#knoblochi box plot (comparing sympatric and allopatric)
+summary_knob_data=group_by(knoblochi_allo,sympatric)%>%
+  summarize(Mean=mean(Dissimilarity),
+            SE=sd(Dissimilarity)/sqrt(length(Dissimilarity)),
+            LowerCI=(Mean - qt(0.025,length(Dissimilarity)-1,lower.tail=FALSE) *SE),
+            UpperCI=(Mean + qt(0.025, length(Dissimilarity)-1,lower.tail=FALSE)*SE))%>%
+  rename(Dissimilarity=Mean)
+#print(summary_knob_data)
+x_positions = 1:nrow(summary_knob_data)+.5
+
+ggplot(data=knoblochi_allo, aes(x=sympatric,y = Dissimilarity)) +
+  geom_boxplot(outlier.shape=NA,width=.5) +
+  geom_jitter(width=.1,size=1)+
+  geom_errorbar(width=.1,aes(x=x_positions,ymin=LowerCI,ymax=UpperCI),summary_knob_data)+
+  geom_pointrange(aes(x=x_positions,ymin=LowerCI,ymax=UpperCI),summary_knob_data)+
+  ylim(0, 4)+
+  ylab("Dissimilarity Score (D)")+
+  ggtitle(expression(paste(italic("L. knoblochi")," Mimetic Dissimilarity")))+
+  theme_bw()+
+  theme(plot.title=element_text(hjust=0.5))+
+  theme(axis.title.x = element_blank())+
+  scale_x_discrete(labels=c("Allopatric", "Sympatric"))
+
+
+#total group means
+filter(Lampropeltis_Data,Species=="pyromelana")%>%
+  pull(Dissimilarity)%>%
+  mean()%>%
+  print()
+#mean D score for pyromelana is 2.212069
+
+filter(Lampropeltis_Data,Species=="knoblochi")%>%
+  pull(Dissimilarity)%>%
+  mean()%>%
+  print()
+#mean D score for knoblochi is 1.895941.
