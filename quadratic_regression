@@ -1,0 +1,97 @@
+#We ran all of the regressions with a quadratic term as well, but only used the simple linear regression in the paper for a combination of the following reasons: a) the quadratic term did not increase the adjusted r squared, b) the quadratic term did not make biological sense, or c) we wanted to keep the analyses of both species consistent
+
+#That being said, for the sake of transparency here is the code we ran:
+
+#mimicry regression with quadratic
+
+library(tidyverse)
+library(broom)
+
+#print(Lampropeltis_Data)
+
+Pyromelana_Dissimilarity <- filter(Lampropeltis_Data, Species == "pyromelana")
+Pyromelana_lm_result <- lm(Dissimilarity ~ Distance_from_M_euryxanthus + I(Distance_from_M_euryxanthus^2), data = Pyromelana_Dissimilarity)
+print(summary(Pyromelana_lm_result))
+#This gives a multiple r squared of 0.098 and an adjusted r squared of 0.07652.
+
+# Scatter plot of the data points with quadratic regression curve and confidence interval
+ggplot(data = Pyromelana_Dissimilarity, aes(x = Distance_from_M_euryxanthus, y = Dissimilarity)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2), se = TRUE, color = "red") +
+  theme_bw() +
+  labs(x = "Distance from M. euryxanthus", y = "Dissimilarity", title = "Quadratic Regression for Pyromelana") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Filter the data for species "knoblochi"
+Knoblochi_Dissimilarity <- filter(Lampropeltis_Data, Species == "knoblochi")
+
+
+Knoblochi_lm_result <- lm(Dissimilarity ~ Distance_from_M_euryxanthus + I(Distance_from_M_euryxanthus^2), data = Knoblochi_Dissimilarity)
+print(summary(Knoblochi_lm_result))
+
+# test residuals for normality
+Knoblochi_residuals=((Knoblochi_lm_result$residuals))
+print(shapiro.test(Knoblochi_residuals))
+print(ks.test(Knoblochi_residuals,"pnorm"))
+
+#residuals look mostly normal. The distribution around the x axis is weird but only because of the sample
+knoblochi_mimicry_residuals=tibble(Knoblochi_Dissimilarity,Knoblochi_residuals)
+ggplot(data=knoblochi_mimicry_residuals,aes(x=Distance_from_M_euryxanthus,y=Knoblochi_residuals))+
+  geom_point()+
+  theme_bw()
+
+#knoblochi graph
+ggplot(data=Knoblochi_Dissimilarity,aes(x=Distance_from_M_euryxanthus,y=Dissimilarity))+
+  geom_point()+
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2), se = TRUE, color = "black") +
+  theme_bw()+
+  labs(x = "Distance from sympatry/allopatry boundary (km)", y ="Dissimilarity (D)") +
+  ggtitle(expression(paste(italic("L. knoblochi")," Mimetic Variation")))+
+  theme(plot.title=element_text(hjust=0.5))+
+  geom_vline(xintercept = 0, linetype="dotted", color = "black", size=1)+
+  ylim(0,3.9)
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`
+#Latitude quadratic regression
+
+# Filter the data for species "pyromelana" 
+pyromelana_latitude <- Lampropeltis_Data %>%
+  filter(Species == "pyromelana") %>%
+  mutate(proportion_red = Red / Total) %>%
+  mutate(proportion_black = Black / Total)
+
+Pyromelana_latitude_lm <- lm(proportion_black ~ Latitude + I(Latitude^2), data = pyromelana_latitude)
+print(summary(Pyromelana_latitude_lm))
+
+ggplot(data = pyromelana_latitude, aes(x = Latitude, y = proportion_black)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2), se = TRUE, color = "red") +
+  theme_bw() +
+  labs(x = "Latitude", y = "Proportion Black", title = "Quadratic Regression for Pyromelana Latitude") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Filter the data for species "knoblochi"
+knoblochi_latitude <- Lampropeltis_Data %>%
+  filter(Species == "knoblochi") %>%
+  mutate(proportion_red = Red / Total) %>%
+  mutate(proportion_black = Black / Total)
+
+Knoblochi_latitude_lm <- lm(proportion_black ~ Latitude + I(Latitude^2), data = knoblochi_latitude)
+print(summary(Knoblochi_latitude_lm))
+
+#Knoblochi_latitude_residuals=(Knoblochi_latitude_lm$residuals)
+#print(shapiro.test(Knoblochi_latitude_residuals))
+#p val is still 0.006235, so still not normal. So adding the quadratic doesn't improve anything, including the residuals
+
+#graph of knoblochi latitude
+ggplot(data = knoblochi_latitude, aes(x = Latitude, y = proportion_black)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2), se = TRUE, color = "red") +
+  theme_bw() +
+  labs(x = "Latitude", y = "Proportion Black", title = "Quadratic Regression for Knoblochi Latitude") +
+  theme(plot.title = element_text(hjust = 0.5))
