@@ -1,4 +1,5 @@
 #Mean comparisons
+#these were not included in the final version of the paper
 
 library(tidyverse)
 
