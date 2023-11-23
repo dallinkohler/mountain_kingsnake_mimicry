@@ -1,23 +1,22 @@
 library(tidyverse)
 library(broom)
-
 #print(Lampropeltis_Data)
 
 #Pyromelana regression of mimicry and distance + residual normality test
 Pyromelana_Dissimilarity=filter(Lampropeltis_Data,Species=="pyromelana")
-#print(Pyromelana_Dissimilarity)
-Pyromelana_lm_result=lm(Dissimilarity~Distance_from_M_euryxanthus,data=Lampropeltis_Data)
-#print(summary.lm(Pyromelana_lm_result))
-#^^^R squared value is 0.09376, meaning that about 9.4% of the variation in dissimilarity (of color) can be explained by distance
+print(Pyromelana_Dissimilarity)
+Pyromelana_lm_result=lm(Dissimilarity~Distance_from_M_euryxanthus,data=Pyromelana_Dissimilarity)
+print(summary.lm(Pyromelana_lm_result))
+#^^^R squared value is 0.09666, meaning that about 9.7% of the variation in dissimilarity (of color) can be explained by distance
 #print(tidy(Pyromelana_lm_result))
-#^^^^^ p value is 0.00392. It is below 0.05, so it is significant (we can reject that there is zero relationship)
-#print(confint(Pyromelana_lm_result))
-#^^^ default 95 confidence interval for the slope is 0.0004954011 to 0.002511131, all positive.
+#^^^^^ p value is 0.00338. It is below 0.05, so it is significant (we can reject that there is zero relationship)
 Pyromelana_residuals=((Pyromelana_lm_result$residuals))
 #print(shapiro.test(Pyromelana_residuals))
-#the residuals are normal; shapiro test gives a p value of 0.06665, which is above 0.05
+#the residuals are normal; shapiro test gives a p value of 0.06839, which is above 0.05
+#print(ks.test(Pyromelana_residuals,"pnorm"))
+#^^^ Kolmogorov-Smirnov also indicates normal residuals; p=0.7863
 
-#Pyromelana graph:
+#Pyromelana mimicry graph:
 ggplot(data=Pyromelana_Dissimilarity,aes(x=Distance_from_M_euryxanthus,y=Dissimilarity))+
   geom_point()+
   geom_smooth(method=lm,color="black")+
@@ -25,47 +24,55 @@ ggplot(data=Pyromelana_Dissimilarity,aes(x=Distance_from_M_euryxanthus,y=Dissimi
   labs(x = "Distance from sympatry/allopatry boundary (km)", y ="Dissimilarity (D)") +
   ggtitle(expression(paste(italic("L. pyromelana")," Mimetic Variation")))+
   theme(plot.title=element_text(hjust=0.5))+
-  geom_vline(xintercept = 0, linetype="dotted", color = "black", size=1)+
+  geom_vline(xintercept = 0, linetype="dotted", color = "gray", size=1)+
   ylim(0,3.9)
-
 
 #Knoblochi regression of mimicry and distance + residual normality test
 Knoblochi_Dissimilarity=filter(Lampropeltis_Data,Species=="knoblochi")
-#print(Knoblochi_Dissimilarity)
+print(Knoblochi_Dissimilarity)
 Knoblochi_lm_result=lm(Dissimilarity~Distance_from_M_euryxanthus,data=Knoblochi_Dissimilarity)
-#print(summary.lm(Knoblochi_lm_result))
-#^^^R squared value is 0.003713, meaning that about .37% of the variation in dissimilarity (of color) can be explained by distance
+
+print(summary.lm(Knoblochi_lm_result))
+#^^^R squared value is 0.004361, meaning that about .44% of the variation in dissimilarity (of color) can be explained by distance
 #print(tidy(Knoblochi_lm_result)$p.value)
-#^^^^^ p value is 0.562, so it is NOT significant (we cannot reject that there is zero relationship)
-#print(confint(Knoblochi_lm_result))
-#^^^ default 95 confidence interval for the slope is -0.001411829 0.002583099; unable to say if it is positive or negative, which makes sense with such a high p value
+#^^^^^ p value is 0.5294, so it is NOT significant (we cannot reject that there is zero relationship)
 Knoblochi_residuals=((Knoblochi_lm_result$residuals))
 #print(shapiro.test(Knoblochi_residuals))
-#shapiro test of residuals gives a p value of 0.001407, so we can't say they are normal. Not sure if this is matters since the result was so far from being significant anyway
+#print(ks.test(Knoblochi_residuals,"pnorm"))
+#shapiro test of residuals gives a p value of 0.001353, indicating residuals are not normal
+#Kolmogorov-Smirnov test gives a p value of 0.09985, indicating the residuals are normal (but KS test has weak power)
+#Transformations of the data fail to make the residuals normal for this species for the Shapiro-Wilks test, however this does not necessarily invalidate the result (see Schmidt and Finan 2018 and Lumley et al. 2002)
+#when graphed, the residuals don't look entirely normal. The sparse sample of allopatric knoblochi is throwing things off.
+knoblochi_mimicry_residuals=tibble(Knoblochi_Dissimilarity,Knoblochi_residuals)
+ggplot(data=knoblochi_mimicry_residuals,aes(x=Distance_from_M_euryxanthus,y=Knoblochi_residuals))+
+  geom_point()+
+  theme_bw()
 
-#knoblochi graph
+#knoblochi mimicry graph
 ggplot(data=Knoblochi_Dissimilarity,aes(x=Distance_from_M_euryxanthus,y=Dissimilarity))+
   geom_point()+
-  geom_smooth(method=lm,color="black")+
+  geom_smooth(method=lm,color="black",linetype="longdash")+
   theme_bw()+
   labs(x = "Distance from sympatry/allopatry boundary (km)", y ="Dissimilarity (D)") +
   ggtitle(expression(paste(italic("L. knoblochi")," Mimetic Variation")))+
   theme(plot.title=element_text(hjust=0.5))+
-  geom_vline(xintercept = 0, linetype="dotted", color = "black", size=1)+
+  geom_vline(xintercept = 0, linetype="dotted",color = "gray", size=1)+
   ylim(0,3.9)
 
-#If the two species were to be viewed as one species as was the case until 2011, this is what the mimicry regression results would be
+
+#If the two species were to be viewed as one species, as was the case until 2011, this is what the mimicry regression results would be
 total_lm_result=lm(Dissimilarity~Distance_from_M_euryxanthus,data=Lampropeltis_Data)
 #print(summary.lm(total_lm_result))
-#^^R squared value is 0.07214, so 7.2% of the variation in dissimilarity is explained by distance
+#^^R squared value is 0.07375, so 7.4% of the variation in dissimilarity is explained by distance
 #print(tidy(total_lm_result))
-#p value is 0.000267, so it would be statistically significant but the residuals are not normal (see below)
-#print(confint(total_lm_result))
-#95% conf int for the slope is  0.0006008295 0.00195851
+#p value is 0.0002262, so it would be statistically significant but the residuals are not normal (see below)
 total_residuals=((total_lm_result$residuals))
-#shapiro test gives a p value of 0.0002267, which is below 0.05, indicating the residuals are not normal. The graph of the residuals also does not look entirely normal.
 #print(shapiro.test(total_residuals))
+#shapiro test gives a p value of 0.0002074, which is below 0.05, indicating the residuals are not normal.
+#print(ks.test(total_residuals, "pnorm"))
+#KS test gives a p value of 0.2148, indicating normality (though this test has low power)
 new_data=(tibble(Lampropeltis_Data, total_residuals))
+#The graph of the residuals also does not look entirely normal, though not super skewed.
 ggplot(data=new_data,aes(x=Distance_from_M_euryxanthus,y=total_residuals))+
   geom_point()+
   theme_bw()+
